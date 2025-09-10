@@ -1,7 +1,7 @@
 # server/app.py
 #!/usr/bin/env python3
 
-from flask import Flask, make_response
+from flask import Flask, make_response, jsonify
 from flask_migrate import Migrate
 
 from models import db, Earthquake
@@ -21,6 +21,28 @@ def index():
     return make_response(body, 200)
 
 # Add views here
+
+@app.route("/earthquakes/<int:id>", methods=["GET"])
+def get_department(id):
+    quake = db.session.get(Earthquake, id)
+
+    if quake:
+        return jsonify(quake.to_dict()), 200
+    else:
+        return jsonify({"message": f"Earthquake {id} not found."}), 404
+
+@app.route("/earthquakes/magnitude/<float:magnitude>", methods=["GET"])
+def get_earthquakes_by_magnitude(magnitude):
+    # Query all earthquakes with magnitude >= parameter
+    quakes = Earthquake.query.filter(Earthquake.magnitude >= magnitude).all()
+
+    # Prepare the response
+    response = {
+        "count": len(quakes),
+        "quakes": [q.to_dict() for q in quakes]  # SerializerMixin provides to_dict()
+    }
+
+    return jsonify(response), 200
 
 
 if __name__ == '__main__':
